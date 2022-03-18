@@ -11,11 +11,6 @@ import supportsColor from 'supports-color'
 import lintStaged from '../lib/index.js'
 import { CONFIG_STDIN_ERROR } from '../lib/messages.js'
 
-// Force colors for packages that depend on https://www.npmjs.com/package/supports-color
-if (supportsColor.stdout) {
-  process.env.FORCE_COLOR = supportsColor.stdout.level.toString()
-}
-
 // Do not terminate main Listr process on SIGINT
 process.on('SIGINT', () => {})
 
@@ -43,9 +38,24 @@ cmdline
     'show task output even when tasks succeed; by default only failed output is shown',
     false
   )
+  .option('--no-color', 'disable the output color', false)
   .parse(process.argv)
 
 const cmdlineOptions = cmdline.opts()
+
+/**
+ * Force colors for packages that depend on https://www.npmjs.com/package/supports-color
+ *
+ * UPDATE:
+ * Notice that the use of FORCE_COLOR overrides all other color support checks. This will lead to:
+ * Use `eslint --no-color` will not work, So:
+ * Add `--no-color` option to fix the problem
+ *
+ * TIPS:
+ * This configuration is the highest priority
+ */
+process.env.FORCE_COLOR =
+  supportsColor.stdout && !!cmdlineOptions.color ? supportsColor.stdout.level.toString() : 0
 
 if (cmdlineOptions.debug) {
   debug.enable('lint-staged*')
